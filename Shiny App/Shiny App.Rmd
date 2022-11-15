@@ -1,0 +1,109 @@
+---
+title: "Untitled"
+author: "Aleksandra Dacko"
+date: "11/15/2022"
+output: html_document
+
+---
+
+
+```{r}
+library(DT)
+library(here)
+library("readxl")
+library(dplyr)
+library(r2d3)
+library(shiny)
+library(shinythemes)
+library(shinydashboard)
+library(packcircles)
+library(ggplot2)
+library(RColorBrewer)
+library(htmlwidgets)
+library("digest")
+library("bit")
+library(shinySignals)
+library(plotly)
+library(networkD3)
+library(tidyverse)
+library(htmlwidgets)
+library(devtools)
+```
+
+
+```{r cars}
+DS<- read_excel("Data/DS courses UU.xlsx")
+```
+
+
+```{r }
+shinyApp(
+  ui = navbarPage("Data Science Related Courses at UU", theme = shinytheme("flatly"),
+                  tabPanel("Topics overview",
+                           sidebarLayout(
+                             sidebarPanel(
+                               selectInput("level", "Education Level:",
+                                          c("Introduction Bachelor" = "1",
+                                             "Intermediate Bachelor" =  "2" ,
+                                            "Advance Bachelor" = "3",
+                                              "Master"="M",
+                                              "Post-academic"="Post-academic")),
+                                selectInput("course", "Course type:",
+                                              list(`Regular` = c("Course","Practical","Research project"),
+                                                    `Summer School` = c("summer","winter","online"))
+                                            )
+                            ),
+                             mainPanel(
+                               h2("Main topics covered"),
+                                d3Output("d3"),
+                               textOutput("text"),
+                                DT::dataTableOutput('table')
+                               
+                             )
+                           )
+                             
+                           ),
+                  tabPanel("Topics overview plotly",
+                             mainPanel(
+                               h2("Main topics covered"),
+                               forceNetworkOutput(outputId = "net")
+                           )
+                             
+                           )
+                 
+  ),
+server = function(input, output) { 
+  level=reactive(input$level)
+  course=reactive(input$course)
+  
+  output$d3 <- renderD3({
+    data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty=="Faculty of Social Sciences",Level==level(),DS$`Course type`==course()) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
+    colnames(data)<-c("id","value")
+    
+      if (nrow(data) == 0){return()}else{
+        r2d3(data=data, d3_version = 4, script ="bubble.js")
+        }
+  })
+  
+  output$text<-renderText({input$click_event})
+  
+output$table <- DT::renderDataTable({
+    DS %>% filter(Faculty=="Faculty of Social Sciences",Level==level(),`Course type`==course()) %>% select(c(1,3,5,7,8,9,12))
+      },server = F)
+  
+    
+output$net <- renderForceNetwork({
+      nodes <- read.csv("https://kateto.net/workshops/data/Dataset1-Media-Example-NODES.csv", header=T, as.is=T)
+    links <- read.csv("https://kateto.net/workshops/data/Dataset1-Media-Example-EDGES.csv", header=T, as.is=T)
+    links.d3 <- data.frame(from=as.numeric(factor(links$from))-1, 
+                 to=as.numeric(factor(links$to))-1 )
+    nodes.d3 <- cbind(idn=factor(nodes$media, levels=nodes$media), nodes)
+    forceNetwork(Links = links.d3, Nodes = nodes.d3, Source="from", Target="to",
+               NodeID = "idn", Group = "type.label",linkWidth = 1,
+               linkColour = "#afafaf", fontSize=12, zoom=T, legend=T,
+               Nodesize=6, opacity = 1, charge=-600, 
+               width = 600, height = 600)})
+                 
+}
+)
+```
