@@ -11,10 +11,10 @@ svg.attr("font-family", "sans-serif")
   .attr("font-size", "18")
   .attr("text-anchor", "middle");
     
-var svgSize = 600;
+var svgSize = 800;
 var pack = d3.pack()
   .size([svgSize, svgSize])
-  .padding(6);
+  .padding(15);
     
 var format = d3.format(",d");
 var color = d3.scaleOrdinal(d3.schemeCategory20c);
@@ -80,12 +80,12 @@ r2d3.onRender(function(data, svg, width, height, options) {
   node.append("text")
     .attr("clip-path", function(d) { return "url(#clip-" + d.id + ")"; })
     .selectAll("tspan")
-    .data(function(d) { return d.id.split(/(?=[A-Z][^A-Z])/g); }) //d.short.split(/(?=[A-Z][^A-Z])/g); })
+    .data(function(d) { return d.short.split(/(?=[A-Z][^A-Z])/g); })
     .enter()
     .append("tspan")
       .transition().duration(400)
       .attr("x", 0)
-      .attr("y", function(d, i, nodes) { return 13 + (i - nodes.length / 2 - 0.5) * 10; })
+      .attr("y", function(d, i, nodes) { return 13 + (i - nodes.length / 2 - 0.5) * 12; })
       .transition()
       .duration(400)
       .text(function(d) { return d; });
