@@ -35,8 +35,8 @@ library(shinyWidgets)
 DS<- read_excel("Data/DS courses UU.xlsx")
 short<- read_excel("Data/short.xlsx")
 levels_names<-c("1","2","3","M","Post-academic")
-cource_names<-unique(DS$Course_type)
-faculty_names<-complete.cases(unique(DS$Faculty))
+course_names<-unique(DS$Course_type)
+faculty_names<-unique(DS$Faculty)[complete.cases(unique(DS$Faculty))]
 ```
 
 
@@ -60,7 +60,9 @@ shinyApp(
                                             "All"="all"),selected ='all'),
                                selectInput("faculty", "The Faculty:",
                                           c("Faculty of Social Sciences" = "Faculty of Social Sciences",
-                                             "Faculty of Science" = "Faculty of Science")
+                                             "Faculty of Science" = "Faculty of Science",
+                                            "Faculty of Medicine"="Faculty of Medicine",
+                                            "Faculty of Veterinary"= "Faculty of Veterinary Medicine")
                                           ),
                                 selectInput("course", "Course type:",
                                               list(`Regular` = c("Course","Practical","Research project"),
@@ -76,7 +78,7 @@ shinyApp(
                                
                              ),
                              column(width = 8,
-                                    
+                                  
                                h4("Main topics covered",align = "center"),
                                 d3Output("d3"),
                                h5(textOutput("text")),
@@ -86,11 +88,18 @@ shinyApp(
                            )
                              
                            ),
-                  tabPanel("Topics overview plotly",
-                             mainPanel(
-                               h2("Main topics covered"),
-                               forceNetworkOutput(outputId = "net")
-                           )
+                  tabPanel("Overview",
+                           column(width = 12,
+                           wellPanel(
+                             selectInput("overview", "Overview:",choices = 
+                                          c("Faculty" = "Faculty",
+                                            "Level"="Level",
+                                            "Course"="Course")),
+                             #textOutput('text')
+                           )),
+                            column(width = 12,
+                           uiOutput("plots")
+                             )
                              
                            )
                  
@@ -100,16 +109,18 @@ server = function(input, output, session) {
   level=reactive(input$level)
   course=reactive(input$course)
   faculty=reactive(input$faculty)
+  overview=reactive(input$overview)
 
   observeEvent(input$Reset_table, {
-    shinyjs::reset()
+    #shinyjs::reset()
     session$sendCustomMessage(type = "resetValue", message = "click_event")
   })
       
 
   output$d3 <- renderD3({
     if(level()=="all"){
-      data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==faculty(),DS$Course_type==course()) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
+      data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==faculty(),DS$Course_type==course()) %>%
+        pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
     }else{
       data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==faculty(),Level==level(),DS$Course_type==course()) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
    }
@@ -130,6 +141,60 @@ server = function(input, output, session) {
        paste0("The database of courses that cover the ", input$click_event," topics")
     }
          })
+  # output$d3_new<-renderD3({
+  #   for(i in faculty_names[1]){
+  #     data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==i) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
+  #     colnames(data)<-c("id","value")
+  #   data<-left_join(data,short, by="id")
+  #     
+  #   }
+  #   r2d3(data=data, d3_version = 4, script ="bubble.js")
+  # })
+  
+   # Insert the right number of plot output objects into the web page
+#  if(overview()=="Faculty"){
+#    cln<-6
+#    target<-faculty_names
+#  }else if(overview()=="Levels"){
+#    cln<-4
+#    target<-levels_names
+#  }else if(overview()=="Course"){
+#    cln<-2
+#    target<-course_names
+#  }
+#  output$text<-renderText(target)
+  
+  output$plots <- renderUI({
+    plot_output_list <- lapply(1:length(faculty_names), function(i) {
+     plotname <- paste("plot", i, sep="")
+      column(width = 6,
+              h4(faculty_names[i],align = "center"),
+               tags$div(style = "margin-top: 10px; margin-bottom: 10px;",
+      
+                d3Output(plotname)
+               ))
+    })
+
+    # Convert the list to a tagList - this is necessary for the list of items
+    # to display properly.
+    do.call(tagList, plot_output_list)
+  })
+  
+
+  for (i in 1:length(faculty_names)) {
+    # Need local so that each item gets its own number. Without it, the value
+    # of i in the renderPlot() will be the same across all instances, because
+    # of when the expression is evaluated.
+    local({
+      my_i <- i
+      plotname <- paste("plot", my_i, sep="")
+      data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==faculty_names[i]) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
+    colnames(data)<-c("id","value")
+    data<-left_join(data,short, by="id")
+
+      output[[plotname]] <- renderD3({r2d3(data=data, d3_version = 4, script ="bubble.js")})
+    })
+  }
   
 output$table <- DT::renderDataTable({
   
@@ -169,6 +234,7 @@ output$net <- renderForceNetwork({
 }
 )
 ```
+
 ```{r}
 data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty=="Faculty of Science", Level=="M") %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0) 
     colnames(data)<-c("id","value")
