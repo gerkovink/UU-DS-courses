@@ -7,20 +7,16 @@
 // Initialization
 
 
-svg.attr("font-family", "sans-serif")
+svg.attr("font-family", "Arial Black")
   .attr("font-size", "18")
   .attr("text-anchor", "middle");
     
-var svgSize = 800;
+var svgSize = 1000;
 var pack = d3.pack()
   .size([svgSize, svgSize])
-  .padding(15);
+  .padding(20);
     
 var format = d3.format(",d");
-
-var colors = new Map([["Study design", "black"], ["Statistical models", "white"], ["Epidemiology", "blue"],["Data Collection methods", "yellow"],["Specific Data Analysis","green"]])
-
-//var color = d3.scaleOrdinal(d3.schemeCategory20c);
 
 var group = svg.append("g");
 
@@ -55,7 +51,11 @@ r2d3.onRender(function(data, svg, width, height, options) {
     });
   var dacol = ["Strong theoretical base of data science practice and ethics",	"Causal inference",	"Data Collection methods",	"Database Management",	"nonSQL databases",	"Relational databases",	"Data Imputation"	,"Supervised Machine Learning","Data wrangling",	"Deep learning",	"Network science",	"Unsupervised Machine Learning",	"Programming", 	"SQL",	"Python", 	"Data clean-up",	"QGIS",	"PCRaster",	"R	Rmardown",	"Epidemiology",	"Bayesian statistics",	"Statistical models",	"Stochastic Modeling",	"Explorative Data Analysis",	"Specific Data Analysis",	"Simulation models",	"PAC",	"Data mining",	"Big data",	"Visualizations",	"Graph Analysis/Graph construction",	"Data manipulation",	"SPSS",	"Complex systems",	"MAL",	"HLM",	"Text mining",	"Study design",	"Stata",	"JASP",	"Haskell",	"Mplus","Visual Studio"]
   var myColor = d3.scaleOrdinal().domain(dacol)
-  .range(["#48bf8e", "#48bf8e", "#2c4e2f", "#1f3e9e", "#78ee5a", "#9c1a54", "#a3c541", "#6f1996", "#d595d9", "#573f56", "#eb67f9", "#6f85a6", "#77d1fd", "#21a708", "#9a2a06", "#f7b8a2", "#683d0d", "#fe8f06", "#fd2c3b", "#cdd9b8", "#2580fe", "#7212ff", "#ffce54", "#ff0087", "#a27c59","#69ef7b", "#cb1775", "#528f7a", "#992a13", "#d0d2f0", "#154e56", "#e78361", "#77d6cf", "#6e334f", "#afd35a", "#b97eac", "#f0d27e", "#f231fc", "#5b8313", "#6146ca", "#b28b28", "#ee80fe", "#19a71f", "#0494fb", "#fc2c44", "#6108e8", "#55450a", "#1a4fa3"])
+  .range(["#317eb4","#3859ad","#6f996c","#a0b587","#6d577a","#ccb793","#dcceb6","#ece5d8","#aca0b0","#c4bcc7",
+"#ddd8de","#b4d3f6","#f258ea","#f687f0","#fab6f6","#A8D1E7","#B3DBD8","#FEE5E0","#FFBFC5","#F6BD60",
+"#F7EDE2","#F7EDE2","#F5CAC3","#84A59D","#F28482","#82A3AC",'#A9C7C5',"#BFD8D2","#E2CFC9","#D1ACA5",
+"#D2D0F5","#D7C6D8","#F2E7F8","#C0B6FF","#FAF7FB","#EEE8E4","#F3DDD4","#F1C6B8","#E1A292","#ECF8F8",
+"#EEE4E1","#E7D8C9","#E6BEAE"])
  //var color = d3.scaleOrdinal(d3.schemeCategory20c)
 
   
@@ -73,7 +73,7 @@ r2d3.onRender(function(data, svg, width, height, options) {
       .duration(400)
       .ease(d3.easeExp)
       .attr("r", function(d) { return d.r; })
-      .attr("fill", function(d){return myColor(d.id) });
+      .style("fill", function(d){return myColor(d.id) });
      // .style("fill", function(d) { return color(d.id); });
   node.on("click", function(d) {
         var message = d.id;

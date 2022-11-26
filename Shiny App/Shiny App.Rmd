@@ -36,7 +36,7 @@ DS<- read_excel("Data/DS courses UU.xlsx")
 short<- read_excel("Data/short.xlsx")
 levels_names<-c("1","2","3","M","Post-academic")
 course_names<-unique(DS$Course_type)
-faculty_names<-unique(DS$Faculty)[complete.cases(unique(DS$Faculty))]
+faculty_names<-c(unique(DS$Faculty)[complete.cases(unique(DS$Faculty))])
 ```
 
 
@@ -94,9 +94,10 @@ shinyApp(
                              selectInput("overview", "Overview:",choices = 
                                           c("Faculty" = "Faculty",
                                             "Level"="Level",
-                                            "Course"="Course")),
-                             numericInput("min_courses","Minimum number of courses: ",min = 1,max=120,value = 1)
-                             #textOutput('text')
+                                            "Course_type"="Course_type"),selected = "Course"),
+                             numericInput("min_courses","Minimum number of courses: ",min = 1,max=120,value = 1),
+                             actionButton("action1", "Press Button")
+     
                            )),
                             column(width = 12,
                            uiOutput("plots")
@@ -110,8 +111,6 @@ server = function(input, output, session) {
   level=reactive(input$level)
   course=reactive(input$course)
   faculty=reactive(input$faculty)
-  overview=reactive(input$overview)
-  mina=reactive({input$min_courses-1})
 
   observeEvent(input$Reset_table, {
     #shinyjs::reset()
@@ -143,62 +142,51 @@ server = function(input, output, session) {
        paste0("The database of courses that cover the ", input$click_event," topics")
     }
          })
-  # output$d3_new<-renderD3({
-  #   for(i in faculty_names[1]){
-  #     data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==i) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
-  #     colnames(data)<-c("id","value")
-  #   data<-left_join(data,short, by="id")
-  #     
-  #   }
-  #   r2d3(data=data, d3_version = 4, script ="bubble.js")
-  # })
-  
-   # Insert the right number of plot output objects into the web page
-#  if(overview()=="Faculty"){
-#    cln<-6
-#    target<-faculty_names
-#  }else if(overview()=="Levels"){
-#    cln<-4
-#    target<-levels_names
-#  }else if(overview()=="Course"){
-#    cln<-2
-#    target<-course_names
-#  }
-#  output$text<-renderText(target)
-  
-  output$plots <- renderUI({
-    plot_output_list <- lapply(1:length(faculty_names), function(i) {
+
+ #here is the code for facet plot 
+observeEvent(input$action1,{
+
+    if(input$overview=='Faculty'){
+        names_for_bubble<-get("faculty_names")
+      }else if(input$overview=='Level'){
+        names_for_bubble<-get("levels_names")
+        }else if(input$overview=='Course_type'){
+          names_for_bubble<-get("course_names")
+          }
+
+    output$plots <- renderUI({
+    plot_output_list <- lapply(1:length(names_for_bubble), function(i) {
      plotname <- paste("plot", i, sep="")
       column(width = 6,
-              h4(faculty_names[i],align = "center"),
-               tags$div(style = "margin-top: 10px; margin-bottom: 10px;",
-      
-                d3Output(plotname)
-               ))
-    })
+              h4(names_for_bubble[i],align = "center"),
+               tags$div(style = "margin-top: 10px; margin-bottom: 10px;", d3Output(plotname))
+             )
+    } )
 
     # Convert the list to a tagList - this is necessary for the list of items
     # to display properly.
     do.call(tagList, plot_output_list)
   })
-#input$min_courses
-  for (i in 1:length(faculty_names)) {
-    # Need local so that each item gets its own number. Without it, the value
-    # of i in the renderPlot() will be the same across all instances, because
-    # of when the expression is evaluated.
-    local({
-  
+ 
+
+    for (i in 1:length(names_for_bubble)) {
+      local({
       my_i <- i
       plotname <- paste("plot", my_i, sep="")
-      data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==faculty_names[i]) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T))
-
+      data <- DS %>% select(c(1,2,4,6,19:60))
+      names<-names_for_bubble[i]
       output[[plotname]] <- renderD3({
-        data<- data%>% filter(value>(input$min_courses-1))
-    colnames(data)<-c("id","value")
-    data<-left_join(data,short, by="id")
+        data<- data  %>% filter(!!sym(input$overview)==names) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>%
+        summarise(value=sum(value,na.rm =T)) %>% filter(value>(input$min_courses-1))
+        colnames(data)<-c("id","value")
+        data<-left_join(data,short, by="id")
+        
         r2d3(data=data, d3_version = 4, script ="bubble.js")})
     })
   }
+  
+})
+  
   
 output$table <- DT::renderDataTable({
   
@@ -227,8 +215,9 @@ output$table <- DT::renderDataTable({
 ```
 
 ```{r}
-data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty=="Faculty of Science", Level=="M") %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0) 
+data <- DS %>% select(c(1,2,4,6,19:60)) %>% filter( Course_type=="Research project") %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0) 
     colnames(data)<-c("id","value")
 data<-left_join(data,short, by="id")
+data
 ```
 
