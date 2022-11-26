@@ -95,6 +95,7 @@ shinyApp(
                                           c("Faculty" = "Faculty",
                                             "Level"="Level",
                                             "Course"="Course")),
+                             numericInput("min_courses","Minimum number of courses: ",min = 1,max=120,value = 1)
                              #textOutput('text')
                            )),
                             column(width = 12,
@@ -110,6 +111,7 @@ server = function(input, output, session) {
   course=reactive(input$course)
   faculty=reactive(input$faculty)
   overview=reactive(input$overview)
+  mina=reactive({input$min_courses-1})
 
   observeEvent(input$Reset_table, {
     #shinyjs::reset()
@@ -179,20 +181,22 @@ server = function(input, output, session) {
     # to display properly.
     do.call(tagList, plot_output_list)
   })
-  
-
+#input$min_courses
   for (i in 1:length(faculty_names)) {
     # Need local so that each item gets its own number. Without it, the value
     # of i in the renderPlot() will be the same across all instances, because
     # of when the expression is evaluated.
     local({
+  
       my_i <- i
       plotname <- paste("plot", my_i, sep="")
-      data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==faculty_names[i]) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T)) %>% filter(value>0)
+      data <- DS %>% select(c(1,4,6,19:60)) %>% filter(Faculty==faculty_names[i]) %>% pivot_longer(where(is.numeric)) %>% group_by(name) %>% summarise(value=sum(value,na.rm =T))
+
+      output[[plotname]] <- renderD3({
+        data<- data%>% filter(value>(input$min_courses-1))
     colnames(data)<-c("id","value")
     data<-left_join(data,short, by="id")
-
-      output[[plotname]] <- renderD3({r2d3(data=data, d3_version = 4, script ="bubble.js")})
+        r2d3(data=data, d3_version = 4, script ="bubble.js")})
     })
   }
   
@@ -217,19 +221,6 @@ output$table <- DT::renderDataTable({
   }
   
       },server = F,options = list(searching = FALSE))
-  
-    
-output$net <- renderForceNetwork({
-      nodes <- read.csv("https://kateto.net/workshops/data/Dataset1-Media-Example-NODES.csv", header=T, as.is=T)
-    links <- read.csv("https://kateto.net/workshops/data/Dataset1-Media-Example-EDGES.csv", header=T, as.is=T)
-    links.d3 <- data.frame(from=as.numeric(factor(links$from))-1, 
-                 to=as.numeric(factor(links$to))-1 )
-    nodes.d3 <- cbind(idn=factor(nodes$media, levels=nodes$media), nodes)
-    forceNetwork(Links = links.d3, Nodes = nodes.d3, Source="from", Target="to",
-               NodeID = "idn", Group = "type.label",linkWidth = 1,
-               linkColour = "#afafaf", fontSize=12, zoom=T, legend=T,
-               Nodesize=6, opacity = 1, charge=-600, 
-               width = 600, height = 600)})
                  
 }
 )
