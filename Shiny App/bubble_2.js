@@ -1,5 +1,4 @@
 
-
 // !preview r2d3 data =data, d3_version = 4
 
 // Based on https://bl.ocks.org/mbostock/4063269
@@ -75,10 +74,7 @@ r2d3.onRender(function(data, svg, width, height, options) {
       .attr("r", function(d) { return d.r; })
       .style("fill", function(d){return myColor(d.id) });
      // .style("fill", function(d) { return color(d.id); });
-  node.on("click", function(d) {
-        var message = d.id;
-        Shiny.onInputChange("click_event",message)
-    });
+     
       
       
   node.append("clipPath")
@@ -100,7 +96,7 @@ r2d3.onRender(function(data, svg, width, height, options) {
       .text(function(d) { return d; });
 
   node.append("title")
-      .text(function(d) { return d.id + "\n Total of: " + format(d.value)+" courses"+"\n Click on me to see details"; });
+      .text(function(d) { return d.id + "\n Total of: " + format(d.value)+" courses"});
   r2d3.resize(width, height);
 });
 
