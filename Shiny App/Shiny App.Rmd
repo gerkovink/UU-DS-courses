@@ -64,7 +64,8 @@ shinyApp(
                                           c("Faculty of Social Sciences" = "Faculty of Social Sciences",
                                              "Faculty of Science" = "Faculty of Science",
                                             "Faculty of Medicine"="Faculty of Medicine",
-                                            "Faculty of Veterinary"= "Faculty of Veterinary Medicine")
+                                            "Faculty of Veterinary"= "Faculty of Veterinary Medicine",
+                                            "Faculty of Geoscience" = "Faculty of Geoscience")
                                           ),
                                 selectInput("course", "Course type:",
                                               list(`Regular` = c("Course","Practical","Research project"),
